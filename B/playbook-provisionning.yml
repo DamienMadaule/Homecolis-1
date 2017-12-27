@@ -8,15 +8,11 @@
     - role: greendayonfire.mongodb
       when: "'mongo_master' in group_names"
 
+
 - name: "Provision a Docker Swarm cluster"
   hosts: docker_engine
+  remote_user: ubuntu
+  become: true
+  gather_facts: yes
   roles:
     - role: atosatto.docker-swarm
-
-#- hosts: "{{ target }}"
-#  gather_facts: yes
-#  remote_user: ubuntu
-#  become: true
-#  roles:
-#    - role: greendayonfire.mongodb
-#      when: "'mongo_replicas' in group_names" 
