@@ -12,7 +12,7 @@ services:
      cpus: "0.05"
      memory: 64M
     reservations:
-     cpus: "0.01"
+     cpus: "0.01" 
      memory: 20M
    restart_policy:
     condition: on-failure

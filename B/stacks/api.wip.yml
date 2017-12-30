@@ -1,0 +1,116 @@
+version: "3.0"
+services:
+ db-mongo:
+  image: mongo:latest
+  deploy:
+   mode: global
+   update_config:
+    parallelism: 1
+    delay: 5s
+   resources:
+    limits:
+     cpus: "0.25"
+     memory: 64M
+    reservations:
+     cpus: "0.12" 
+     memory: 20M
+   restart_policy:
+    condition: on-failure
+    delay: 5s
+    max_attempts: 3
+  ports:
+   - "27017:27017"
+  environment:
+   - MONGO_DATABASE=test
+   - MONGO_USER=root
+   - MONGO_PASSWORD=123456
+  command: mongod --auth
+  networks:
+   - proxy
+  volumes:
+   - '/var/run/docker.sock:/var/run/docker.sock'
+
+ api-prod:
+  image: 172.31.38.203:5000/homecolis-api:latest
+  deploy:
+   replicas: 3
+   update_config:
+    parallelism: 1
+    delay: 4s
+   resources:
+    limits:
+     cpus: "0.65"
+     memory: 1500M
+    reservations:
+     cpus: '0.1'
+     memory: 750M
+   restart_policy:
+    condition: on-failure
+    delay: 5s
+    max_attempts: 3
+   placement:
+    constraints: [node.role == manager]
+    # - "node.labels.loadbalanced == true"
+    # ou (j'ai tagué les différentes nodes, mais j'ai utilisé les roles pour les différenciés)
+    # - "node.labels.loadbalanced=true"
+  depends_on:
+   - db-mongo
+  environment:
+   - SERVICE_PORTS="80"
+   - VIRTUAL_HOST=http://api.homecolis.mdrv/mongo
+   - NODE_ENV=production
+   - MONGO_HOST=107.0.0.1
+   - MONGO_USER=root
+   - MONGO_PASSWORD=123456
+   - MONGO_PORT=27017
+   - MONGO_DATABASE=test
+   - PORT=80
+  networks:
+   - proxy
+  ports:
+   - "8080:80"
+  #volumes:
+  # - '/var/run/docker.sock:/var/run/docker.sock'
+
+ api-dev:
+  image: 172.31.38.203:5000/homecolis-api:latest
+  deploy:
+   replicas: 1
+   update_config:
+    parallelism: 1
+    delay: 4s
+   resources: #Un peu moins de ressources pour le dev
+    limits:
+     cpus: "0.5"
+     memory: 1000M
+    reservations:
+     cpus: '0.05'
+     memory: 500M
+   restart_policy:
+    condition: on-failure
+    delay: 5s
+    max_attempts: 3
+   placement:
+    constraints: [node.role == worker]
+  environment:
+   - SERVICE_PORTS="80"
+   - VIRTUAL_HOST=http://dev.homecolis.mdrv/mongo
+   - NODE_ENV=development
+   - MONGO_HOST=107.0.0.1
+   - MONGO_USER=root
+   - MONGO_PASSWORD=123456
+   - MONGO_PORT=27017
+   - MONGO_DATABASE=test
+   - PORT=80
+  networks:
+   - proxy
+  ports:
+   - "8081:80"
+  depends_on:
+   - db-mongo
+  volumes:
+   - '/var/run/docker.sock:/var/run/docker.sock'
+
+networks:
+ proxy:
+  external: true
