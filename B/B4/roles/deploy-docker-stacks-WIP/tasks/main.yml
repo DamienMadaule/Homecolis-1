@@ -1,0 +1,36 @@
+#ESSAI, je n'ai pas le temps de l'approfondir... #V
+---
+
+# Copie proxy.yml vers machine distante
+- copy:
+    src: ./files/proxy.yml
+    dest: /home/devops/ansible/proxy.yml
+    owner: root
+    group: root
+    mode: 0644
+
+# Copie api.wip.yml vers machine distante
+- copy:
+    src: ./files/api.wip.yml
+    dest: /home/devops/ansible/api.wip.yml
+    owner: root
+    group: root
+    mode: 0644
+
+#Image homecolis
+- name: Récupérer l'image
+  docker:
+    image: docker-manager1.homecolis.mdrv:5000/homecolis-api:latest
+    name: homecolis-api
+    env: "MONGO_HOST: 107.0.0.1,MONGO_USER: root,MONGO_PASSWORD: 123456,MONGO_PORT: 27017,MONGO_DATABASE: test,PORT: 80,NODE_ENV=production"
+    ports: 127.0.0.1:8080:80
+    state: running
+
+- name: Création proxy
+  command: docker network create -d overlay proxy
+
+- name: Commande pour déployer haproxy
+  command: docker stack deploy -c proxy.xml proxy
+
+- name: Commande pour déployer l'api
+  command: docker stack deploy -c api.wip.yml api

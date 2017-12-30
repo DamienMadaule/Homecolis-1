@@ -1,0 +1,16 @@
+---
+
+- name: "Deploy Docker Stack"
+  hosts: docker-manager1
+  remote_user: ubuntu
+  become: yes
+  gather_facts: no
+  roles:
+   - role: deploy-docker-stacks
+     registry:
+      host: "172.31.38.203:5000"
+      username: xxxx
+      password: yyyy
+     stacks:
+      - proxy
+      - api
